@@ -26,6 +26,15 @@ export function useCompany(id: string | undefined) {
   });
 }
 
+/** Admin-only full company detail (any status) — used to review supplier applications. */
+export function useCompanyAdmin(id: string | undefined | null) {
+  return useQuery({
+    queryKey: queryKeys.companyAdmin(id ?? ""),
+    queryFn: () => companyService.getAdmin(id as string),
+    enabled: !!id,
+  });
+}
+
 export function useSaveCompany() {
   const qc = useQueryClient();
   return useMutation({

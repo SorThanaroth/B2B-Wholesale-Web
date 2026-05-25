@@ -1,15 +1,11 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Building2, CheckCircle2, Plus, Search, UserCog } from "lucide-react";
-import {
-  useAdminUsers,
-  useAssignCompany,
-  useCreateSupplier,
-  useUpdateUserStatus,
-} from "@/hooks/useAdmin";
+import { Building2, CheckCircle2, Eye, Plus, Search } from "lucide-react";
+import { useAdminUsers, useCreateSupplier, useUpdateUserStatus } from "@/hooks/useAdmin";
 import { useCompanies } from "@/hooks/useCatalog";
 import { useDebounce } from "@/hooks/useDebounce";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Avatar } from "@/components/common/Avatar";
+import { SupplierReviewModal } from "@/components/admin/SupplierReviewModal";
 import {
   Button,
   Card,
@@ -26,8 +22,7 @@ import {
   type SelectOption,
 } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
-import { USER_STATUSES } from "@/constants";
-import type { CreateSupplierRequest, UserProfile, UserStatus } from "@/types/api";
+import type { CreateSupplierRequest, UserProfile } from "@/types/api";
 
 const EMPTY: CreateSupplierRequest = {
   fullName: "",
@@ -49,12 +44,11 @@ export function AdminSuppliersPage() {
   const { data, isLoading, isError, error, refetch } = useAdminUsers(params);
   const { data: companies } = useCompanies({ size: 100 });
   const createSupplier = useCreateSupplier();
-  const assignCompany = useAssignCompany();
   const updateStatus = useUpdateUserStatus();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<CreateSupplierRequest>(EMPTY);
-  const [managing, setManaging] = useState<UserProfile | null>(null);
+  const [reviewing, setReviewing] = useState<UserProfile | null>(null);
 
   const companyOptions: SelectOption[] =
     companies?.content.map((c) => ({ value: c.id, label: c.name })) ?? [];
@@ -71,6 +65,8 @@ export function AdminSuppliersPage() {
       },
     );
   };
+
+  const pendingCount = data?.content.filter((u) => u.status === "PENDING").length ?? 0;
 
   const columns: Column<UserProfile>[] = [
     {
@@ -97,7 +93,7 @@ export function AdminSuppliersPage() {
       ),
     },
     { key: "status", header: "Status", render: (u) => <UserStatusBadge status={u.status} /> },
-    { key: "joined", header: "Added", render: (u) => formatDate(u.createdAt) },
+    { key: "joined", header: "Applied", render: (u) => formatDate(u.createdAt) },
     {
       key: "actions",
       header: "",
@@ -115,9 +111,9 @@ export function AdminSuppliersPage() {
               Approve
             </Button>
           )}
-          <Button size="sm" variant="outline" onClick={() => setManaging(u)}>
-            <UserCog className="h-4 w-4" />
-            Manage
+          <Button size="sm" variant="outline" onClick={() => setReviewing(u)}>
+            <Eye className="h-4 w-4" />
+            Review
           </Button>
         </div>
       ),
@@ -128,7 +124,11 @@ export function AdminSuppliersPage() {
     <>
       <PageHeader
         title="Suppliers"
-        subtitle="Provision supplier accounts and bind them to a company."
+        subtitle={
+          pendingCount > 0
+            ? `${pendingCount} application(s) awaiting review`
+            : "Review applications, approve accounts and bind them to a company."
+        }
         actions={
           <Button onClick={() => setCreateOpen(true)} disabled={companyOptions.length === 0}>
             <Plus className="h-4 w-4" />
@@ -170,7 +170,7 @@ export function AdminSuppliersPage() {
           <EmptyState
             icon={Building2}
             title="No supplier accounts yet"
-            description="Create a supplier representative and assign them to a company."
+            description="Suppliers can self-register (pending your approval), or create one here."
             action={
               <Button onClick={() => setCreateOpen(true)} disabled={companyOptions.length === 0}>
                 <Plus className="h-4 w-4" />
@@ -181,12 +181,12 @@ export function AdminSuppliersPage() {
         </Card>
       )}
 
-      {/* Create supplier */}
+      {/* Create supplier (admin-provisioned, active immediately) */}
       <Modal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         title="New supplier account"
-        description="The supplier signs in with these credentials."
+        description="Bound to an existing company; active immediately."
         footer={
           <>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
@@ -239,71 +239,12 @@ export function AdminSuppliersPage() {
         </form>
       </Modal>
 
-      {/* Manage supplier */}
-      <Modal
-        open={!!managing}
-        onClose={() => setManaging(null)}
-        title="Manage supplier"
-        description={managing?.email}
-      >
-        {managing && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <Avatar name={managing.fullName} size="lg" />
-              <div>
-                <p className="font-semibold text-slate-800">{managing.fullName}</p>
-                <p className="text-sm text-slate-400">{managing.companyName ?? "No company"}</p>
-              </div>
-            </div>
-
-            <Select
-              label="Company"
-              value={managing.companyId ?? ""}
-              placeholder="Select company"
-              options={companyOptions}
-              onChange={(e) =>
-                assignCompany.mutate(
-                  { id: managing.id, body: { companyId: e.target.value } },
-                  {
-                    onSuccess: () =>
-                      setManaging((m) =>
-                        m
-                          ? {
-                              ...m,
-                              companyId: e.target.value,
-                              companyName:
-                                companyOptions.find((o) => o.value === e.target.value)?.label ??
-                                m.companyName,
-                            }
-                          : m,
-                      ),
-                  },
-                )
-              }
-            />
-
-            <Select
-              label="Account status"
-              value={managing.status}
-              options={USER_STATUSES.map((s) => ({ value: s, label: s }))}
-              onChange={(e) =>
-                updateStatus.mutate(
-                  { id: managing.id, status: e.target.value as UserStatus },
-                  {
-                    onSuccess: () =>
-                      setManaging((m) => (m ? { ...m, status: e.target.value as UserStatus } : m)),
-                  },
-                )
-              }
-            />
-
-            <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-              Suspending blocks the supplier from signing in. Reassigning the company immediately
-              changes which catalog they manage.
-            </p>
-          </div>
-        )}
-      </Modal>
+      {/* Review / approve supplier application */}
+      <SupplierReviewModal
+        supplier={reviewing}
+        companyOptions={companyOptions}
+        onClose={() => setReviewing(null)}
+      />
     </>
   );
 }

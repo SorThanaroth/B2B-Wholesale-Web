@@ -104,9 +104,26 @@ src/
   approval" screen and login is blocked with a clear message until approved. Admins can also create
   accounts directly (admin → **Merchants**/**Suppliers** → *New …*, active immediately) and **Approve**
   pending accounts inline; approving a supplier activates its company.
+- **Supplier application review:** suppliers submit company KYC at registration (business reg. no.,
+  phone, address, description + settlement bank account). On admin → **Suppliers**, *Review* opens a
+  modal (`SupplierReviewModal`) that fetches the full company via `/companies/{id}/admin` and shows
+  every detail so the admin can vet it, then **Approve** / **Reject (suspend)** or reassign the company.
 
 ## Auth & token handling
 
 `lib/apiClient.ts` attaches the access token to every request and, on a `401`, performs a
 single-flight refresh via `POST /auth/refresh` before replaying the original request. If the
 refresh fails, the session is cleared and the app returns to the login screen.
+
+## CI/CD & Docker
+
+- **`Dockerfile`** — multi-stage (Node build → nginx) serving the static SPA with `nginx.conf`
+  (history-API fallback + asset caching). Bake the API URL with `--build-arg VITE_API_BASE_URL=…`.
+- **`.github/workflows/ci.yml`** (at this Frontend repo's root) — on push/PR: Node 20 + npm cache,
+  `npm ci`, `npm run lint` (`tsc --noEmit`), `npm run build`, uploads `dist`. On push to
+  `main`/`master` it builds and pushes the image to **GHCR** (`ghcr.io/<owner>/<repo>`).
+
+> GitHub Actions only runs workflows from `.github/workflows/` at a repository root, so this assumes
+> **Frontend is its own Git repo**. The folder isn't a git repo yet, so the workflow is dormant until
+> you `git init`, push to GitHub, and allow GHCR package writes. (If Backend + Frontend share one repo
+> instead, move both `ci.yml` files to the root `.github/workflows/` with `paths:` + `working-directory`.)

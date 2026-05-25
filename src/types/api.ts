@@ -55,10 +55,14 @@ export interface RegisterRequest {
   phone?: string;
   /** MERCHANT (buyer) or SUPPLIER (seller); defaults to MERCHANT. */
   role?: Role;
-  // Supplier-only — creates the company (supplier = company).
+  // Supplier-only — creates the company (supplier = company). Reviewed by admin before approval.
   companyName?: string;
   bankAccount?: string;
   contactEmail?: string;
+  registrationNo?: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  companyDescription?: string;
 }
 
 /** Self-registration result — accounts are PENDING until an admin approves them. */
@@ -153,12 +157,16 @@ export interface Company {
   name: string;
   logoUrl?: string | null;
   contactEmail?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  description?: string | null;
   status: CompanyStatus;
   createdAt: string;
 }
 
 export interface CompanyAdmin extends Company {
   bankAccount: string;
+  registrationNo?: string | null;
 }
 
 export interface CompanyRequest {
@@ -166,6 +174,10 @@ export interface CompanyRequest {
   logoUrl?: string;
   bankAccount: string;
   contactEmail?: string;
+  registrationNo?: string;
+  phone?: string;
+  address?: string;
+  description?: string;
 }
 
 // ---------- Categories (9.4) ----------

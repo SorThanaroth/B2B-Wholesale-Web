@@ -22,6 +22,10 @@ export const companyService = {
 
   get: (id: string) => api.get<Company>(`/companies/${id}`).then((r) => r.data),
 
+  /** Admin-only full detail (any status) — for reviewing supplier applications. */
+  getAdmin: (id: string) =>
+    api.get<CompanyAdmin>(`/companies/${id}/admin`).then((r) => r.data),
+
   create: (body: CompanyRequest) =>
     api.post<CompanyAdmin>("/companies", body).then((r) => r.data),
 
