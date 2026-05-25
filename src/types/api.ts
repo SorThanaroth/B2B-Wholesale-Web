@@ -14,6 +14,7 @@ export type CartStatus = "ACTIVE" | "CHECKED_OUT";
 export type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "EXPIRED";
 export type SplitStatus = "PENDING" | "PENDING_SETTLEMENT" | "SETTLED";
+export type FulfillmentStatus = "PROCESSING" | "SHIPPED" | "DELIVERED";
 
 // ---------- Generic envelopes ----------
 export interface PageResponse<T> {
@@ -303,6 +304,7 @@ export interface OrderSplit {
   companyName: string;
   subtotal: number;
   paymentStatus: SplitStatus;
+  fulfillmentStatus: FulfillmentStatus;
   paidAt?: string | null;
   settledAt?: string | null;
 }
@@ -365,6 +367,7 @@ export interface Settlement {
   bankAccount: string;
   subtotal: number;
   status: SplitStatus;
+  fulfillmentStatus: FulfillmentStatus;
   paidAt?: string | null;
   settledAt?: string | null;
 }
@@ -452,19 +455,27 @@ export interface SupplierOrderRow {
   paymentStatus: PaymentStatus;
   companySubtotal: number;
   settlementStatus?: SplitStatus | null;
+  fulfillmentStatus?: FulfillmentStatus | null;
+  splitId?: string | null;
   paidAt?: string | null;
 }
 
 export interface SupplierOrderDetail {
   orderId: string;
+  splitId: string;
   createdAt: string;
   orderStatus: OrderStatus;
   paymentStatus: PaymentStatus;
   companySubtotal: number;
   settlementStatus?: SplitStatus | null;
+  fulfillmentStatus: FulfillmentStatus;
   paidAt?: string | null;
   settledAt?: string | null;
   items: OrderItem[];
+}
+
+export interface UpdateFulfillmentRequest {
+  status: FulfillmentStatus;
 }
 
 export interface SupplierDashboard {

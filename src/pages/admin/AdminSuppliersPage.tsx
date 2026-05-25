@@ -3,6 +3,7 @@ import { Building2, CheckCircle2, Eye, Plus, Search } from "lucide-react";
 import { useAdminUsers, useCreateSupplier, useUpdateUserStatus } from "@/hooks/useAdmin";
 import { useCompanies } from "@/hooks/useCatalog";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Avatar } from "@/components/common/Avatar";
 import { SupplierReviewModal } from "@/components/admin/SupplierReviewModal";
@@ -33,13 +34,13 @@ const EMPTY: CreateSupplierRequest = {
 };
 
 export function AdminSuppliersPage() {
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 400);
 
   const params = useMemo(
-    () => ({ role: "SUPPLIER" as const, search: search || undefined, page, size: 12 }),
-    [search, page],
+    () => ({ role: "SUPPLIER" as const, search: search || undefined, page, size }),
+    [search, page, size],
   );
   const { data, isLoading, isError, error, refetch } = useAdminUsers(params);
   const { data: companies } = useCompanies({ size: 100 });
@@ -162,6 +163,8 @@ export function AdminSuppliersPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>

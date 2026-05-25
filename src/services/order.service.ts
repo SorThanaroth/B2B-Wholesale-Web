@@ -2,6 +2,7 @@ import { api } from "@/lib/apiClient";
 import { cleanParams } from "@/lib/utils";
 import type {
   AdminOrderQuery,
+  FulfillmentStatus,
   OrderDetail,
   OrderSummary,
   PageResponse,
@@ -23,6 +24,12 @@ export const orderService = {
   /** Downloads the PDF invoice as a Blob (for paid orders). */
   invoice: (id: string) =>
     api.get<Blob>(`/orders/${id}/invoice`, { responseType: "blob" }).then((r) => r.data),
+
+  /** Merchant confirms a supplier's share of the order has arrived (→ DELIVERED). */
+  confirmDelivery: (orderId: string, splitId: string) =>
+    api
+      .put<OrderDetail>(`/orders/${orderId}/splits/${splitId}/confirm-delivery`)
+      .then((r) => r.data),
 };
 
 /** Section 9.7 — admin order management. */
@@ -36,4 +43,10 @@ export const adminOrderService = {
 
   updateStatus: (id: string, body: UpdateOrderStatusRequest) =>
     api.put<OrderSummary>(`/admin/orders/${id}/status`, body).then((r) => r.data),
+
+  /** Admin override of one company-split's delivery status. */
+  setSplitFulfillment: (orderId: string, splitId: string, status: FulfillmentStatus) =>
+    api
+      .put<OrderDetail>(`/admin/orders/${orderId}/splits/${splitId}/fulfillment`, { status })
+      .then((r) => r.data),
 };

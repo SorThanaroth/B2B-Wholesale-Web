@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSupplierSettlements } from "@/hooks/useSupplier";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import {
   Card,
   CardBody,
   DataTable,
   ErrorState,
+  FulfillmentStatusBadge,
   LoadingState,
   Pagination,
   Select,
@@ -19,12 +21,12 @@ import { ROUTES } from "@/constants/routes";
 import type { Settlement, SplitStatus } from "@/types/api";
 
 export function SupplierSettlementsPage() {
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [status, setStatus] = useState("");
 
   const params = useMemo(
-    () => ({ page, size: 15, status: (status || undefined) as SplitStatus | undefined }),
-    [page, status],
+    () => ({ page, size, status: (status || undefined) as SplitStatus | undefined }),
+    [page, size, status],
   );
   const { data, isLoading, isError, error, refetch } = useSupplierSettlements(params);
 
@@ -47,7 +49,8 @@ export function SupplierSettlementsPage() {
       align: "right",
       render: (s) => <span className="font-semibold">{formatCurrency(s.subtotal)}</span>,
     },
-    { key: "status", header: "Status", render: (s) => <SplitStatusBadge status={s.status} /> },
+    { key: "delivery", header: "Delivery", render: (s) => <FulfillmentStatusBadge status={s.fulfillmentStatus} /> },
+    { key: "status", header: "Settlement", render: (s) => <SplitStatusBadge status={s.status} /> },
     { key: "paid", header: "Paid at", render: (s) => formatDateTime(s.paidAt) },
     { key: "settled", header: "Settled at", render: (s) => formatDateTime(s.settledAt) },
   ];
@@ -92,6 +95,8 @@ export function SupplierSettlementsPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>

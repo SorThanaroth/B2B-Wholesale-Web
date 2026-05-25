@@ -1,6 +1,10 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { useAdminOrder, useUpdateOrderStatus } from "@/hooks/useOrders";
+import {
+  useAdminOrder,
+  useAdminSetSplitFulfillment,
+  useUpdateOrderStatus,
+} from "@/hooks/useOrders";
 import { PageHeader } from "@/components/common/PageHeader";
 import { OrderItemsTable, OrderSplitsTable } from "@/components/common/OrderTables";
 import {
@@ -13,14 +17,15 @@ import {
   Select,
 } from "@/components/ui";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import { ORDER_STATUSES } from "@/constants";
+import { FULFILLMENT_STATUS_META, ORDER_STATUSES } from "@/constants";
 import { ROUTES } from "@/constants/routes";
-import type { OrderStatus } from "@/types/api";
+import type { FulfillmentStatus, OrderStatus } from "@/types/api";
 
 export function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: order, isLoading, isError, error, refetch } = useAdminOrder(id);
   const updateStatus = useUpdateOrderStatus();
+  const setSplitFulfillment = useAdminSetSplitFulfillment();
 
   if (isLoading) return <LoadingState />;
   if (isError || !order) return <ErrorState error={error} onRetry={refetch} />;
@@ -47,8 +52,31 @@ export function AdminOrderDetailPage() {
             <OrderItemsTable items={order.items} />
           </Card>
           <Card>
-            <CardHeader title="Settlement breakdown" description="Each supplier’s share" />
-            <OrderSplitsTable splits={order.splits} />
+            <CardHeader
+              title="Suppliers, settlement & delivery"
+              description="Override a supplier's delivery status if needed"
+            />
+            <OrderSplitsTable
+              splits={order.splits}
+              actions={(s) => (
+                <Select
+                  className="w-36"
+                  value={s.fulfillmentStatus}
+                  disabled={setSplitFulfillment.isPending}
+                  options={(Object.keys(FULFILLMENT_STATUS_META) as FulfillmentStatus[]).map((v) => ({
+                    value: v,
+                    label: FULFILLMENT_STATUS_META[v].label,
+                  }))}
+                  onChange={(e) =>
+                    setSplitFulfillment.mutate({
+                      orderId: order.id,
+                      splitId: s.id,
+                      status: e.target.value as FulfillmentStatus,
+                    })
+                  }
+                />
+              )}
+            />
           </Card>
         </div>
 

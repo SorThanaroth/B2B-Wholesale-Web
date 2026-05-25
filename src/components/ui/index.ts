@@ -16,4 +16,5 @@ export {
   SplitStatusBadge,
   UserStatusBadge,
   CompanyStatusBadge,
+  FulfillmentStatusBadge,
 } from "./StatusBadge";

@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import {
   Building,
   Building2,
+  CheckCircle2,
+  Clock,
   CreditCard,
   Hash,
   KeyRound,
   Mail,
-  MailCheck,
   MapPin,
   Phone,
   ShoppingCart,
@@ -19,7 +20,7 @@ import { authService } from "@/services/auth.service";
 import { getApiErrorMessage } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
-import type { Role } from "@/types/api";
+import type { RegistrationResponse, Role } from "@/types/api";
 
 type AccountType = Extract<Role, "MERCHANT" | "SUPPLIER">;
 
@@ -45,7 +46,7 @@ export function RegisterPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState<RegistrationResponse | null>(null);
 
   const set =
     (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -56,7 +57,7 @@ export function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      await authService.register({
+      const res = await authService.register({
         fullName: form.fullName,
         email: form.email,
         password: form.password,
@@ -74,7 +75,7 @@ export function RegisterPage() {
             }
           : {}),
       });
-      setSubmitted(true);
+      setResult(res);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not create account"));
     } finally {
@@ -82,22 +83,34 @@ export function RegisterPage() {
     }
   };
 
-  if (submitted) {
+  if (result) {
+    const isActive = result.status === "ACTIVE";
     return (
-      <AuthShell title="Registration received">
+      <AuthShell title={isActive ? "Account created" : "Registration received"}>
         <div className="space-y-6">
-          <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
-            <MailCheck className="mt-0.5 h-5 w-5 shrink-0" />
+          <div
+            className={
+              isActive
+                ? "flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800"
+                : "flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800"
+            }
+          >
+            {isActive ? (
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+            ) : (
+              <Clock className="mt-0.5 h-5 w-5 shrink-0" />
+            )}
             <div className="text-sm">
-              <p className="font-medium">Your {role.toLowerCase()} account is pending approval.</p>
-              <p className="mt-1">
-                An administrator will review and activate it shortly. You’ll be able to sign in once
-                it’s approved.
+              <p className="font-medium">
+                {isActive
+                  ? "Your account is ready."
+                  : "Your supplier account is pending approval."}
               </p>
+              <p className="mt-1">{result.message}</p>
             </div>
           </div>
           <Link to={ROUTES.login}>
-            <Button className="w-full">Back to sign in</Button>
+            <Button className="w-full">{isActive ? "Sign in" : "Back to sign in"}</Button>
           </Link>
         </div>
       </AuthShell>

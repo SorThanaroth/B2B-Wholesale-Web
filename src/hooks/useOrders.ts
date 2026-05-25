@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { queryKeys } from "@/lib/queryClient";
 import { getApiErrorMessage } from "@/lib/apiClient";
 import { adminOrderService, orderService } from "@/services/order.service";
-import type { AdminOrderQuery, OrderStatus } from "@/types/api";
+import type { AdminOrderQuery, FulfillmentStatus, OrderStatus } from "@/types/api";
 
 /* ------------------------------ Merchant orders ----------------------------- */
 export function useMyOrders(params: { page?: number; size?: number; sort?: string } = {}) {
@@ -18,6 +18,21 @@ export function useOrder(id: string | undefined) {
     queryKey: queryKeys.order(id ?? ""),
     queryFn: () => orderService.get(id as string),
     enabled: !!id,
+  });
+}
+
+/** Merchant confirms a supplier's share of the order has arrived. */
+export function useConfirmDelivery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, splitId }: { orderId: string; splitId: string }) =>
+      orderService.confirmDelivery(orderId, splitId),
+    onSuccess: (detail) => {
+      qc.setQueryData(queryKeys.order(detail.id), detail);
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Marked as arrived");
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e)),
   });
 }
 
@@ -74,6 +89,28 @@ export function useUpdateOrderStatus() {
       qc.invalidateQueries({ queryKey: ["admin-orders"] });
       qc.invalidateQueries({ queryKey: queryKeys.adminOrder(id) });
       toast.success("Order status updated");
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e)),
+  });
+}
+
+/** Admin override of one company-split's delivery status. */
+export function useAdminSetSplitFulfillment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      splitId,
+      status,
+    }: {
+      orderId: string;
+      splitId: string;
+      status: FulfillmentStatus;
+    }) => adminOrderService.setSplitFulfillment(orderId, splitId, status),
+    onSuccess: (detail) => {
+      qc.setQueryData(queryKeys.adminOrder(detail.id), detail);
+      qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast.success("Delivery status updated");
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });

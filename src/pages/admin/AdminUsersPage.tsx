@@ -7,6 +7,7 @@ import {
   useUpdateUserStatus,
 } from "@/hooks/useAdmin";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Avatar } from "@/components/common/Avatar";
 import {
@@ -30,11 +31,11 @@ import type { CreateMerchantRequest, Role, UserProfile, UserStatus } from "@/typ
 const EMPTY: CreateMerchantRequest = { fullName: "", email: "", password: "", phone: "" };
 
 export function AdminUsersPage() {
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 400);
 
-  const params = useMemo(() => ({ page, size: 12, search: search || undefined }), [page, search]);
+  const params = useMemo(() => ({ page, size, search: search || undefined }), [page, size, search]);
 
   const { data, isLoading, isError, error, refetch } = useAdminUsers(params);
   const updateStatus = useUpdateUserStatus();
@@ -162,6 +163,8 @@ export function AdminUsersPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>

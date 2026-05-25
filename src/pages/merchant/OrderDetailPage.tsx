@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Download, QrCode } from "lucide-react";
-import { useDownloadInvoice, useOrder } from "@/hooks/useOrders";
+import { ArrowLeft, Check, Download, QrCode } from "lucide-react";
+import { useConfirmDelivery, useDownloadInvoice, useOrder } from "@/hooks/useOrders";
 import { PageHeader } from "@/components/common/PageHeader";
 import { OrderItemsTable, OrderSplitsTable } from "@/components/common/OrderTables";
 import {
@@ -21,6 +21,7 @@ export function OrderDetailPage() {
   const navigate = useNavigate();
   const { data: order, isLoading, isError, error, refetch } = useOrder(id);
   const downloadInvoice = useDownloadInvoice();
+  const confirmDelivery = useConfirmDelivery();
 
   if (isLoading) return <LoadingState />;
   if (isError || !order) return <ErrorState error={error} onRetry={refetch} />;
@@ -71,10 +72,25 @@ export function OrderDetailPage() {
 
           <Card>
             <CardHeader
-              title="Settlement breakdown"
-              description="Each supplier’s share of this order"
+              title="Suppliers & delivery"
+              description="Confirm arrival once each supplier's items reach you"
             />
-            <OrderSplitsTable splits={order.splits} />
+            <OrderSplitsTable
+              splits={order.splits}
+              actions={(s) =>
+                isPaid && s.fulfillmentStatus !== "DELIVERED" ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={confirmDelivery.isPending && confirmDelivery.variables?.splitId === s.id}
+                    onClick={() => confirmDelivery.mutate({ orderId: order.id, splitId: s.id })}
+                  >
+                    <Check className="h-4 w-4" />
+                    Confirm arrival
+                  </Button>
+                ) : null
+              }
+            />
           </Card>
         </div>
 

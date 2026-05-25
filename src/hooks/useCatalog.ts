@@ -6,6 +6,7 @@ import { categoryService, companyService, productService } from "@/services/cata
 import type {
   CategoryRequest,
   CompanyRequest,
+  CompanyStatus,
   ProductQuery,
   ProductRequest,
 } from "@/types/api";
@@ -26,6 +27,14 @@ export function useCompany(id: string | undefined) {
   });
 }
 
+/** Admin list of ALL companies (active + inactive). */
+export function useAdminCompanies(params: { page?: number; size?: number } = {}) {
+  return useQuery({
+    queryKey: queryKeys.adminCompanies(params),
+    queryFn: () => companyService.listAllAdmin(params),
+  });
+}
+
 /** Admin-only full company detail (any status) — used to review supplier applications. */
 export function useCompanyAdmin(id: string | undefined | null) {
   return useQuery({
@@ -42,19 +51,23 @@ export function useSaveCompany() {
       id ? companyService.update(id, body) : companyService.create(body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["companies"] });
+      qc.invalidateQueries({ queryKey: ["admin-companies"] });
       toast.success("Company saved");
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
 }
 
-export function useDeactivateCompany() {
+/** Activate / deactivate a company (status only). */
+export function useSetCompanyStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => companyService.deactivate(id),
-    onSuccess: () => {
+    mutationFn: ({ id, status }: { id: string; status: CompanyStatus }) =>
+      companyService.setStatus(id, status),
+    onSuccess: (_data, { status }) => {
+      qc.invalidateQueries({ queryKey: ["admin-companies"] });
       qc.invalidateQueries({ queryKey: ["companies"] });
-      toast.success("Company deactivated");
+      toast.success(status === "ACTIVE" ? "Company activated" : "Company deactivated");
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });

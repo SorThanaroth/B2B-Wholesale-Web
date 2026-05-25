@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { QrCode, Store } from "lucide-react";
 import { useMyOrders } from "@/hooks/useOrders";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import {
   Button,
@@ -16,17 +16,13 @@ import {
   type Column,
 } from "@/components/ui";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import { DEFAULT_PAGE_SIZE } from "@/constants";
 import { ROUTES } from "@/constants/routes";
 import type { OrderSummary } from "@/types/api";
 
 export function OrdersPage() {
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
-  const { data, isLoading, isError, error, refetch } = useMyOrders({
-    page,
-    size: DEFAULT_PAGE_SIZE,
-  });
+  const { page, size, setPage, setSize } = usePagination();
+  const { data, isLoading, isError, error, refetch } = useMyOrders({ page, size });
 
   const columns: Column<OrderSummary>[] = [
     {
@@ -88,6 +84,8 @@ export function OrdersPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>

@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSupplierOrders } from "@/hooks/useSupplier";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import {
   Card,
   CardBody,
   DataTable,
   ErrorState,
+  FulfillmentStatusBadge,
   LoadingState,
   OrderStatusBadge,
   Pagination,
@@ -22,12 +24,12 @@ import type { OrderStatus, SupplierOrderRow } from "@/types/api";
 
 export function SupplierOrdersPage() {
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [status, setStatus] = useState("");
 
   const params = useMemo(
-    () => ({ page, size: 15, status: (status || undefined) as OrderStatus | undefined }),
-    [page, status],
+    () => ({ page, size, status: (status || undefined) as OrderStatus | undefined }),
+    [page, size, status],
   );
   const { data, isLoading, isError, error, refetch } = useSupplierOrders(params);
 
@@ -45,6 +47,11 @@ export function SupplierOrdersPage() {
       render: (o) => <span className="font-semibold">{formatCurrency(o.companySubtotal)}</span>,
     },
     { key: "payment", header: "Payment", render: (o) => <PaymentStatusBadge status={o.paymentStatus} /> },
+    {
+      key: "delivery",
+      header: "Delivery",
+      render: (o) => (o.fulfillmentStatus ? <FulfillmentStatusBadge status={o.fulfillmentStatus} /> : "—"),
+    },
     { key: "status", header: "Order", render: (o) => <OrderStatusBadge status={o.orderStatus} /> },
     {
       key: "settle",
@@ -94,6 +101,8 @@ export function SupplierOrdersPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Building2, Pencil, Plus, Power } from "lucide-react";
-import { useCompanies, useDeactivateCompany, useSaveCompany } from "@/hooks/useCatalog";
+import { useAdminCompanies, useSaveCompany, useSetCompanyStatus } from "@/hooks/useCatalog";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Avatar } from "@/components/common/Avatar";
 import {
@@ -20,7 +21,7 @@ import {
   type Column,
 } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
-import type { Company, CompanyRequest } from "@/types/api";
+import type { CompanyAdmin, CompanyRequest } from "@/types/api";
 
 const EMPTY: CompanyRequest = {
   name: "",
@@ -34,15 +35,15 @@ const EMPTY: CompanyRequest = {
 };
 
 export function AdminCompaniesPage() {
-  const [page, setPage] = useState(0);
-  const { data, isLoading, isError, error, refetch } = useCompanies({ page, size: 12 });
+  const { page, size, setPage, setSize } = usePagination();
+  const { data, isLoading, isError, error, refetch } = useAdminCompanies({ page, size });
   const saveCompany = useSaveCompany();
-  const deactivateCompany = useDeactivateCompany();
+  const setStatus = useSetCompanyStatus();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Company | null>(null);
+  const [editing, setEditing] = useState<CompanyAdmin | null>(null);
   const [form, setForm] = useState<CompanyRequest>(EMPTY);
-  const [toDeactivate, setToDeactivate] = useState<Company | null>(null);
+  const [toDeactivate, setToDeactivate] = useState<CompanyAdmin | null>(null);
 
   const openCreate = () => {
     setEditing(null);
@@ -50,15 +51,14 @@ export function AdminCompaniesPage() {
     setModalOpen(true);
   };
 
-  const openEdit = (c: Company) => {
+  const openEdit = (c: CompanyAdmin) => {
     setEditing(c);
-    // bankAccount + registrationNo aren't on the merchant-facing list DTO; admins re-enter them.
     setForm({
       name: c.name,
       logoUrl: c.logoUrl ?? "",
-      bankAccount: "",
+      bankAccount: c.bankAccount ?? "",
       contactEmail: c.contactEmail ?? "",
-      registrationNo: "",
+      registrationNo: c.registrationNo ?? "",
       phone: c.phone ?? "",
       address: c.address ?? "",
       description: c.description ?? "",
@@ -71,7 +71,7 @@ export function AdminCompaniesPage() {
     saveCompany.mutate({ id: editing?.id, body: form }, { onSuccess: () => setModalOpen(false) });
   };
 
-  const columns: Column<Company>[] = [
+  const columns: Column<CompanyAdmin>[] = [
     {
       key: "name",
       header: "Company",
@@ -96,9 +96,19 @@ export function AdminCompaniesPage() {
           <Button size="sm" variant="ghost" onClick={() => openEdit(c)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          {c.status === "ACTIVE" && (
-            <Button size="sm" variant="ghost" onClick={() => setToDeactivate(c)}>
+          {c.status === "ACTIVE" ? (
+            <Button size="sm" variant="ghost" onClick={() => setToDeactivate(c)} title="Deactivate">
               <Power className="h-4 w-4 text-red-500" />
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              title="Activate"
+              loading={setStatus.isPending && setStatus.variables?.id === c.id}
+              onClick={() => setStatus.mutate({ id: c.id, status: "ACTIVE" })}
+            >
+              <Power className="h-4 w-4 text-emerald-600" />
             </Button>
           )}
         </div>
@@ -110,7 +120,7 @@ export function AdminCompaniesPage() {
     <>
       <PageHeader
         title="Companies"
-        subtitle="Supplier companies and their settlement bank accounts."
+        subtitle="Supplier companies and their settlement bank accounts. Deactivating only changes status — it never deletes."
         actions={
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
@@ -132,6 +142,8 @@ export function AdminCompaniesPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>
@@ -179,7 +191,6 @@ export function AdminCompaniesPage() {
             label="Settlement bank account"
             required
             placeholder="e.g. ABA-000111222"
-            hint={editing ? "Re-enter to confirm the settlement account." : undefined}
             value={form.bankAccount}
             onChange={(e) => setForm((f) => ({ ...f, bankAccount: e.target.value }))}
           />
@@ -193,7 +204,6 @@ export function AdminCompaniesPage() {
             <Input
               label="Business reg. no."
               placeholder="e.g. KH-123456"
-              hint={editing ? "Re-enter to keep on file." : undefined}
               value={form.registrationNo}
               onChange={(e) => setForm((f) => ({ ...f, registrationNo: e.target.value }))}
             />
@@ -229,12 +239,15 @@ export function AdminCompaniesPage() {
         onClose={() => setToDeactivate(null)}
         onConfirm={() =>
           toDeactivate &&
-          deactivateCompany.mutate(toDeactivate.id, { onSuccess: () => setToDeactivate(null) })
+          setStatus.mutate(
+            { id: toDeactivate.id, status: "INACTIVE" },
+            { onSuccess: () => setToDeactivate(null) },
+          )
         }
         title={`Deactivate ${toDeactivate?.name ?? "company"}?`}
-        message="The company and its products will no longer appear in the catalog."
+        message="The company stays on file and can be reactivated anytime — this only sets its status to inactive."
         confirmLabel="Deactivate"
-        loading={deactivateCompany.isPending}
+        loading={setStatus.isPending}
       />
     </>
   );

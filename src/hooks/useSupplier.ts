@@ -3,7 +3,12 @@ import toast from "react-hot-toast";
 import { queryKeys } from "@/lib/queryClient";
 import { getApiErrorMessage } from "@/lib/apiClient";
 import { supplierService } from "@/services/supplier.service";
-import type { OrderStatus, SplitStatus, SupplierProductRequest } from "@/types/api";
+import type {
+  FulfillmentStatus,
+  OrderStatus,
+  SplitStatus,
+  SupplierProductRequest,
+} from "@/types/api";
 
 /* ------------------------------- Overview ---------------------------------- */
 export function useSupplierDashboard() {
@@ -79,6 +84,22 @@ export function useSupplierOrder(id: string | undefined) {
     queryKey: queryKeys.supplierOrder(id ?? ""),
     queryFn: () => supplierService.getOrder(id as string),
     enabled: !!id,
+  });
+}
+
+/** Supplier updates the delivery status of their share (e.g. mark Shipped). */
+export function useUpdateSupplierFulfillment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, status }: { orderId: string; status: FulfillmentStatus }) =>
+      supplierService.updateFulfillment(orderId, status),
+    onSuccess: (detail) => {
+      qc.setQueryData(queryKeys.supplierOrder(detail.orderId), detail);
+      qc.invalidateQueries({ queryKey: ["supplier-orders"] });
+      qc.invalidateQueries({ queryKey: queryKeys.supplierDashboard });
+      toast.success("Delivery status updated");
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e)),
   });
 }
 

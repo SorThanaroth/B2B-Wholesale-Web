@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminOrders } from "@/hooks/useOrders";
 import { useCompanies } from "@/hooks/useCatalog";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import {
   Card,
@@ -28,7 +29,7 @@ const toIso = (date: string, end = false) =>
 
 export function AdminOrdersPage() {
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [status, setStatus] = useState("");
   const [company, setCompany] = useState("");
   const [from, setFrom] = useState("");
@@ -41,13 +42,13 @@ export function AdminOrdersPage() {
   const query = useMemo(
     () => ({
       page,
-      size: 15,
+      size,
       status: (status || undefined) as OrderStatus | undefined,
       company: company || undefined,
       from: toIso(from),
       to: toIso(to, true),
     }),
-    [page, status, company, from, to],
+    [page, size, status, company, from, to],
   );
 
   const { data, isLoading, isError, error, refetch } = useAdminOrders(query);
@@ -136,6 +137,8 @@ export function AdminOrdersPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>

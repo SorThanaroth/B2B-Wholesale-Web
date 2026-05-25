@@ -9,7 +9,9 @@ import {
   useSaveProduct,
 } from "@/hooks/useCatalog";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
+import { Avatar } from "@/components/common/Avatar";
 import {
   Badge,
   Button,
@@ -43,14 +45,14 @@ const EMPTY: ProductRequest = {
 };
 
 export function AdminProductsPage() {
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [searchInput, setSearchInput] = useState("");
   const [companyFilter, setCompanyFilter] = useState("");
   const search = useDebounce(searchInput, 400);
 
   const query = useMemo(
-    () => ({ page, size: 12, search: search || undefined, company: companyFilter || undefined }),
-    [page, search, companyFilter],
+    () => ({ page, size, search: search || undefined, company: companyFilter || undefined }),
+    [page, size, search, companyFilter],
   );
 
   const { data, isLoading, isError, error, refetch } = useProducts(query);
@@ -119,12 +121,15 @@ export function AdminProductsPage() {
       key: "name",
       header: "Product",
       render: (p) => (
-        <div>
-          <p className="font-medium text-slate-800">{p.name}</p>
-          <p className="text-xs text-slate-400">
-            {p.companyName}
-            {p.categoryName ? ` · ${p.categoryName}` : ""}
-          </p>
+        <div className="flex items-center gap-3">
+          <Avatar name={p.name} src={p.imageUrl} square />
+          <div>
+            <p className="font-medium text-slate-800">{p.name}</p>
+            <p className="text-xs text-slate-400">
+              {p.companyName}
+              {p.categoryName ? ` · ${p.categoryName}` : ""}
+            </p>
+          </div>
         </div>
       ),
     },
@@ -230,6 +235,8 @@ export function AdminProductsPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>
