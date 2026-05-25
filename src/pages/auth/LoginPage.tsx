@@ -6,7 +6,7 @@ import { Button, Input } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { getApiErrorMessage } from "@/lib/apiClient";
 import { homeForRole, ROUTES } from "@/constants/routes";
-import { DEMO_CREDENTIALS } from "@/constants";
+// import { DEMO_CREDENTIALS } from "@/constants";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -32,10 +32,10 @@ export function LoginPage() {
     }
   };
 
-  const fillDemo = (which: keyof typeof DEMO_CREDENTIALS) => {
-    setEmail(DEMO_CREDENTIALS[which].email);
-    setPassword(DEMO_CREDENTIALS[which].password);
-  };
+  // const fillDemo = (which: keyof typeof DEMO_CREDENTIALS) => {
+  //   setEmail(DEMO_CREDENTIALS[which].email);
+  //   setPassword(DEMO_CREDENTIALS[which].password);
+  // };
 
   return (
     <AuthShell title="Welcome back" subtitle="Sign in to your merchant or admin account.">
@@ -78,7 +78,7 @@ export function LoginPage() {
         </Button>
       </form>
 
-      <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-xs text-slate-500">
+      {/* <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-xs text-slate-500">
         <p className="mb-2 font-medium text-slate-600">Demo accounts</p>
         <div className="flex flex-wrap gap-2">
           <button
@@ -103,7 +103,7 @@ export function LoginPage() {
             Use admin
           </button>
         </div>
-      </div>
+      </div> */}
 
       <p className="mt-6 text-center text-sm text-slate-500">
         New merchant?{" "}
