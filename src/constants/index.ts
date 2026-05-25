@@ -4,6 +4,7 @@
  */
 import type {
   CompanyStatus,
+  FulfillmentStatus,
   OrderStatus,
   PaymentStatus,
   SplitStatus,
@@ -38,6 +39,12 @@ export const SPLIT_STATUS_META: Record<SplitStatus, StatusMeta> = {
   SETTLED: { label: "Settled", tone: "success" },
 };
 
+export const FULFILLMENT_STATUS_META: Record<FulfillmentStatus, StatusMeta> = {
+  PROCESSING: { label: "Processing", tone: "neutral" },
+  SHIPPED: { label: "Shipped", tone: "info" },
+  DELIVERED: { label: "Arrived", tone: "success" },
+};
+
 export const USER_STATUS_META: Record<UserStatus, StatusMeta> = {
   PENDING: { label: "Pending", tone: "warning" },
   ACTIVE: { label: "Active", tone: "success" },
@@ -62,6 +69,9 @@ export const SPLIT_STATUSES: SplitStatus[] = ["PENDING", "PENDING_SETTLEMENT", "
 export const USER_STATUSES: UserStatus[] = ["PENDING", "ACTIVE", "SUSPENDED"];
 
 export const DEFAULT_PAGE_SIZE = 12;
+
+/** Selectable page sizes shown by the Pagination control. */
+export const PAGE_SIZE_OPTIONS = [12, 24, 48, 96];
 
 /** Demo credentials seeded by the backend (DataSeeder.java) — shown on the login screen. */
 export const DEMO_CREDENTIALS = {

@@ -7,6 +7,7 @@ import {
   useSettleSplit,
 } from "@/hooks/useAdmin";
 import { useCompanies } from "@/hooks/useCatalog";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import {
   Button,
@@ -15,6 +16,7 @@ import {
   ConfirmDialog,
   DataTable,
   ErrorState,
+  FulfillmentStatusBadge,
   LoadingState,
   Pagination,
   Select,
@@ -28,7 +30,7 @@ import { ROUTES } from "@/constants/routes";
 import type { Settlement, SplitStatus } from "@/types/api";
 
 export function AdminSettlementsPage() {
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [status, setStatus] = useState("");
   const [company, setCompany] = useState("");
   const [toSettle, setToSettle] = useState<Settlement | null>(null);
@@ -45,7 +47,7 @@ export function AdminSettlementsPage() {
     [company, status],
   );
 
-  const query = useMemo(() => ({ ...filters, page, size: 15 }), [filters, page]);
+  const query = useMemo(() => ({ ...filters, page, size }), [filters, page, size]);
 
   const { data, isLoading, isError, error, refetch } = useSettlements(query);
   const settleSplit = useSettleSplit();
@@ -73,23 +75,31 @@ export function AdminSettlementsPage() {
       align: "right",
       render: (s) => <span className="font-semibold">{formatCurrency(s.subtotal)}</span>,
     },
-    { key: "status", header: "Status", render: (s) => <SplitStatusBadge status={s.status} /> },
+    { key: "delivery", header: "Delivery", render: (s) => <FulfillmentStatusBadge status={s.fulfillmentStatus} /> },
+    { key: "status", header: "Settlement", render: (s) => <SplitStatusBadge status={s.status} /> },
     { key: "paid", header: "Paid at", render: (s) => formatDateTime(s.paidAt) },
     {
       key: "actions",
       header: "",
       align: "right",
-      render: (s) =>
-        s.status === "PENDING_SETTLEMENT" ? (
+      render: (s) => {
+        if (s.status === "SETTLED") {
+          return <span className="text-xs text-emerald-600">Settled {formatDateTime(s.settledAt)}</span>;
+        }
+        if (s.status !== "PENDING_SETTLEMENT") {
+          return <span className="text-xs text-slate-400">Awaiting payment</span>;
+        }
+        // Paid, awaiting payout — but only settle once the goods have arrived.
+        if (s.fulfillmentStatus !== "DELIVERED") {
+          return <span className="text-xs text-amber-600">Awaiting delivery</span>;
+        }
+        return (
           <Button size="sm" variant="secondary" onClick={() => setToSettle(s)}>
             <CheckCircle2 className="h-4 w-4" />
             Settle
           </Button>
-        ) : s.status === "SETTLED" ? (
-          <span className="text-xs text-emerald-600">Settled {formatDateTime(s.settledAt)}</span>
-        ) : (
-          <span className="text-xs text-slate-400">Awaiting payment</span>
-        ),
+        );
+      },
     },
   ];
 
@@ -153,6 +163,8 @@ export function AdminSettlementsPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>

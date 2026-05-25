@@ -1,13 +1,15 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { useSupplierOrder } from "@/hooks/useSupplier";
+import { ArrowLeft, Truck } from "lucide-react";
+import { useSupplierOrder, useUpdateSupplierFulfillment } from "@/hooks/useSupplier";
 import { PageHeader } from "@/components/common/PageHeader";
 import { OrderItemsTable } from "@/components/common/OrderTables";
 import {
+  Button,
   Card,
   CardBody,
   CardHeader,
   ErrorState,
+  FulfillmentStatusBadge,
   LoadingState,
   OrderStatusBadge,
   PaymentStatusBadge,
@@ -19,9 +21,12 @@ import { ROUTES } from "@/constants/routes";
 export function SupplierOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: order, isLoading, isError, error, refetch } = useSupplierOrder(id);
+  const updateFulfillment = useUpdateSupplierFulfillment();
 
   if (isLoading) return <LoadingState />;
   if (isError || !order) return <ErrorState error={error} onRetry={refetch} />;
+
+  const canShip = order.paymentStatus === "PAID" && order.fulfillmentStatus === "PROCESSING";
 
   return (
     <>
@@ -63,6 +68,10 @@ export function SupplierOrderDetailPage() {
                   <dd><PaymentStatusBadge status={order.paymentStatus} /></dd>
                 </div>
                 <div className="flex items-center justify-between">
+                  <dt className="text-slate-500">Delivery</dt>
+                  <dd><FulfillmentStatusBadge status={order.fulfillmentStatus} /></dd>
+                </div>
+                <div className="flex items-center justify-between">
                   <dt className="text-slate-500">Settlement</dt>
                   <dd>
                     {order.settlementStatus ? (
@@ -91,6 +100,32 @@ export function SupplierOrderDetailPage() {
                   {formatCurrency(order.companySubtotal)}
                 </span>
               </div>
+
+              {/* Fulfilment action */}
+              {canShip ? (
+                <Button
+                  className="w-full"
+                  loading={updateFulfillment.isPending}
+                  onClick={() =>
+                    updateFulfillment.mutate({ orderId: order.orderId, status: "SHIPPED" })
+                  }
+                >
+                  <Truck className="h-4 w-4" />
+                  Mark as shipped
+                </Button>
+              ) : order.fulfillmentStatus === "SHIPPED" ? (
+                <p className="rounded-lg bg-accent-50 p-3 text-center text-xs text-accent-700">
+                  Shipped — awaiting the merchant to confirm arrival.
+                </p>
+              ) : order.fulfillmentStatus === "DELIVERED" ? (
+                <p className="rounded-lg bg-emerald-50 p-3 text-center text-xs text-emerald-700">
+                  Delivered — the merchant confirmed arrival.
+                </p>
+              ) : (
+                <p className="rounded-lg bg-slate-50 p-3 text-center text-xs text-slate-500">
+                  You can mark this shipped once the order is paid.
+                </p>
+              )}
             </CardBody>
           </Card>
         </div>

@@ -1,4 +1,10 @@
-import { DataTable, SplitStatusBadge, type Column } from "@/components/ui";
+import type { ReactNode } from "react";
+import {
+  DataTable,
+  FulfillmentStatusBadge,
+  SplitStatusBadge,
+  type Column,
+} from "@/components/ui";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import type { OrderItem, OrderSplit } from "@/types/api";
 
@@ -27,15 +33,36 @@ export function OrderItemsTable({ items }: { items: OrderItem[] }) {
   return <DataTable columns={itemColumns} rows={items} rowKey={(i) => i.id} />;
 }
 
-const splitColumns: Column<OrderSplit>[] = [
-  { key: "company", header: "Supplier", render: (s) => <span className="font-medium text-slate-800">{s.companyName}</span> },
-  { key: "subtotal", header: "Owed", align: "right", render: (s) => formatCurrency(s.subtotal) },
-  { key: "status", header: "Settlement", render: (s) => <SplitStatusBadge status={s.paymentStatus} /> },
-  { key: "paid", header: "Paid at", render: (s) => formatDateTime(s.paidAt) },
-  { key: "settled", header: "Settled at", render: (s) => formatDateTime(s.settledAt) },
-];
+/**
+ * Per-company settlement + delivery breakdown (Section 8.2). `actions` renders a
+ * trailing cell per row — used by the merchant (confirm arrival) and admin (override).
+ */
+export function OrderSplitsTable({
+  splits,
+  actions,
+}: {
+  splits: OrderSplit[];
+  actions?: (split: OrderSplit) => ReactNode;
+}) {
+  const columns: Column<OrderSplit>[] = [
+    {
+      key: "company",
+      header: "Supplier",
+      render: (s) => <span className="font-medium text-slate-800">{s.companyName}</span>,
+    },
+    { key: "subtotal", header: "Owed", align: "right", render: (s) => formatCurrency(s.subtotal) },
+    {
+      key: "delivery",
+      header: "Delivery",
+      render: (s) => <FulfillmentStatusBadge status={s.fulfillmentStatus} />,
+    },
+    { key: "settlement", header: "Settlement", render: (s) => <SplitStatusBadge status={s.paymentStatus} /> },
+    { key: "paid", header: "Paid at", render: (s) => formatDateTime(s.paidAt) },
+  ];
 
-/** The per-company settlement breakdown (Section 8.2). */
-export function OrderSplitsTable({ splits }: { splits: OrderSplit[] }) {
-  return <DataTable columns={splitColumns} rows={splits} rowKey={(s) => s.id} />;
+  if (actions) {
+    columns.push({ key: "actions", header: "", align: "right", render: actions });
+  }
+
+  return <DataTable columns={columns} rows={splits} rowKey={(s) => s.id} />;
 }

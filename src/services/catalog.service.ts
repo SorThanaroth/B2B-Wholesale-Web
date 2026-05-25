@@ -6,6 +6,7 @@ import type {
   Company,
   CompanyAdmin,
   CompanyRequest,
+  CompanyStatus,
   ImportResult,
   PageResponse,
   Product,
@@ -32,7 +33,15 @@ export const companyService = {
   update: (id: string, body: CompanyRequest) =>
     api.put<CompanyAdmin>(`/companies/${id}`, body).then((r) => r.data),
 
-  deactivate: (id: string) => api.delete<void>(`/companies/${id}`).then((r) => r.data),
+  /** Admin list of ALL companies (active + inactive). */
+  listAllAdmin: (params: { page?: number; size?: number }) =>
+    api
+      .get<PageResponse<CompanyAdmin>>("/admin/companies", { params: cleanParams(params) })
+      .then((r) => r.data),
+
+  /** Activate / deactivate a company (status only — never deletes). */
+  setStatus: (id: string, status: CompanyStatus) =>
+    api.put<CompanyAdmin>(`/admin/companies/${id}/status`, { status }).then((r) => r.data),
 };
 
 /** Section 9.4 — Categories (returned as a tree). */

@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useProducts, useCategories, useCompanies } from "@/hooks/useCatalog";
 import { useAddToCart } from "@/hooks/useCart";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ProductCard } from "@/components/common/ProductCard";
 import {
@@ -16,11 +17,10 @@ import {
   type SelectOption,
 } from "@/components/ui";
 import { flattenCategoryOptions } from "@/lib/categories";
-import { DEFAULT_PAGE_SIZE } from "@/constants";
 import type { Product } from "@/types/api";
 
 export function CatalogPage() {
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [searchInput, setSearchInput] = useState("");
   const [company, setCompany] = useState("");
   const [category, setCategory] = useState("");
@@ -33,14 +33,14 @@ export function CatalogPage() {
   const query = useMemo(
     () => ({
       page,
-      size: DEFAULT_PAGE_SIZE,
+      size,
       search: search || undefined,
       company: company || undefined,
       category: category || undefined,
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
     }),
-    [page, search, company, category, minPrice, maxPrice],
+    [page, size, search, company, category, minPrice, maxPrice],
   );
 
   const { data, isLoading, isError, error, refetch } = useProducts(query);
@@ -166,6 +166,8 @@ export function CatalogPage() {
             totalPages={data.totalPages}
             totalElements={data.totalElements}
             onChange={setPage}
+            pageSize={size}
+            onPageSizeChange={setSize}
           />
         </>
       ) : (

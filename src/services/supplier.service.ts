@@ -2,6 +2,7 @@ import { api } from "@/lib/apiClient";
 import { cleanParams } from "@/lib/utils";
 import type {
   Company,
+  FulfillmentStatus,
   ImportResult,
   OrderStatus,
   PageResponse,
@@ -53,6 +54,12 @@ export const supplierService = {
 
   getOrder: (id: string) =>
     api.get<SupplierOrderDetail>(`/supplier/orders/${id}`).then((r) => r.data),
+
+  /** Supplier updates their share's delivery status (PROCESSING / SHIPPED). */
+  updateFulfillment: (orderId: string, status: FulfillmentStatus) =>
+    api
+      .put<SupplierOrderDetail>(`/supplier/orders/${orderId}/fulfillment`, { status })
+      .then((r) => r.data),
 
   // Settlements (own company)
   listSettlements: (params: { status?: SplitStatus; page?: number; size?: number }) =>

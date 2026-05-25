@@ -1,5 +1,6 @@
 import {
   COMPANY_STATUS_META,
+  FULFILLMENT_STATUS_META,
   ORDER_STATUS_META,
   PAYMENT_STATUS_META,
   SPLIT_STATUS_META,
@@ -7,6 +8,7 @@ import {
 } from "@/constants";
 import type {
   CompanyStatus,
+  FulfillmentStatus,
   OrderStatus,
   PaymentStatus,
   SplitStatus,
@@ -37,5 +39,10 @@ export function UserStatusBadge({ status }: { status: UserStatus }) {
 
 export function CompanyStatusBadge({ status }: { status: CompanyStatus }) {
   const m = COMPANY_STATUS_META[status];
+  return <Badge tone={m.tone}>{m.label}</Badge>;
+}
+
+export function FulfillmentStatusBadge({ status }: { status: FulfillmentStatus }) {
+  const m = FULFILLMENT_STATUS_META[status];
   return <Badge tone={m.tone}>{m.label}</Badge>;
 }

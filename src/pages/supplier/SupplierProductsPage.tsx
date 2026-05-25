@@ -9,7 +9,9 @@ import {
 } from "@/hooks/useSupplier";
 import { useCategories } from "@/hooks/useCatalog";
 import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
 import { PageHeader } from "@/components/common/PageHeader";
+import { Avatar } from "@/components/common/Avatar";
 import {
   Badge,
   Button,
@@ -41,12 +43,12 @@ const EMPTY: SupplierProductRequest = {
 };
 
 export function SupplierProductsPage() {
-  const [page, setPage] = useState(0);
+  const { page, size, setPage, setSize } = usePagination();
   const [searchInput, setSearchInput] = useState("");
   const search = useDebounce(searchInput, 400);
 
   const { data: company } = useSupplierCompany();
-  const params = useMemo(() => ({ page, size: 12, search: search || undefined }), [page, search]);
+  const params = useMemo(() => ({ page, size, search: search || undefined }), [page, size, search]);
   const { data, isLoading, isError, error, refetch } = useSupplierProducts(params);
   const { data: categories } = useCategories();
   const saveProduct = useSaveSupplierProduct();
@@ -107,9 +109,12 @@ export function SupplierProductsPage() {
       key: "name",
       header: "Product",
       render: (p) => (
-        <div>
-          <p className="font-medium text-slate-800">{p.name}</p>
-          <p className="text-xs text-slate-400">{p.categoryName ?? "Uncategorised"}</p>
+        <div className="flex items-center gap-3">
+          <Avatar name={p.name} src={p.imageUrl} square />
+          <div>
+            <p className="font-medium text-slate-800">{p.name}</p>
+            <p className="text-xs text-slate-400">{p.categoryName ?? "Uncategorised"}</p>
+          </div>
         </div>
       ),
     },
@@ -200,6 +205,8 @@ export function SupplierProductsPage() {
               totalPages={data.totalPages}
               totalElements={data.totalElements}
               onChange={setPage}
+              pageSize={size}
+              onPageSizeChange={setSize}
             />
           </div>
         </Card>
