@@ -22,6 +22,7 @@ export const queryKeys = {
   adminDashboard: ["admin-dashboard"] as const,
   companies: (params?: unknown) => ["companies", params] as const,
   company: (id: string) => ["company", id] as const,
+  companyAdmin: (id: string) => ["company-admin", id] as const,
   categories: ["categories"] as const,
   products: (params?: unknown) => ["products", params] as const,
   product: (id: string) => ["product", id] as const,

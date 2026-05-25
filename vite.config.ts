@@ -18,15 +18,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // Split heavy/stable vendors into their own cacheable chunks.
-        // Function form is supported by both Rollup and Rolldown.
+        // Split the heavy charting lib into its own cacheable chunk; keep the rest
+        // of node_modules in one "vendor" chunk to avoid cross-chunk circular deps
+        // (react ⇄ react-query ⇄ router all reference each other).
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
-          if (id.includes("recharts") || id.includes("/d3-")) return "charts";
-          if (id.includes("react-router") || id.includes("/react-dom/") || id.includes("/react/")) {
-            return "react";
+          if (id.includes("recharts") || id.includes("/d3-") || id.includes("victory")) {
+            return "charts";
           }
-          if (id.includes("@tanstack") || id.includes("/axios/")) return "query";
           return "vendor";
         },
       },

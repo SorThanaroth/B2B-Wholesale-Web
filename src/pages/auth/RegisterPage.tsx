@@ -4,15 +4,17 @@ import {
   Building,
   Building2,
   CreditCard,
+  Hash,
   KeyRound,
   Mail,
   MailCheck,
+  MapPin,
   Phone,
   ShoppingCart,
   Store,
 } from "lucide-react";
 import { AuthShell } from "@/components/layout/AuthShell";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, Textarea } from "@/components/ui";
 import { authService } from "@/services/auth.service";
 import { getApiErrorMessage } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,10 @@ export function RegisterPage() {
     companyName: "",
     bankAccount: "",
     contactEmail: "",
+    registrationNo: "",
+    companyPhone: "",
+    companyAddress: "",
+    companyDescription: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,6 +67,10 @@ export function RegisterPage() {
               companyName: form.companyName,
               bankAccount: form.bankAccount,
               contactEmail: form.contactEmail || undefined,
+              registrationNo: form.registrationNo || undefined,
+              companyPhone: form.companyPhone || undefined,
+              companyAddress: form.companyAddress || undefined,
+              companyDescription: form.companyDescription || undefined,
             }
           : {}),
       });
@@ -201,6 +211,38 @@ export function RegisterPage() {
               value={form.contactEmail}
               onChange={set("contactEmail")}
             />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Business reg. no."
+                icon={<Hash className="h-4 w-4" />}
+                placeholder="e.g. KH-123456"
+                value={form.registrationNo}
+                onChange={set("registrationNo")}
+              />
+              <Input
+                label="Company phone"
+                icon={<Phone className="h-4 w-4" />}
+                placeholder="+855 …"
+                value={form.companyPhone}
+                onChange={set("companyPhone")}
+              />
+            </div>
+            <Input
+              label="Business address"
+              icon={<MapPin className="h-4 w-4" />}
+              placeholder="Street, city, province"
+              value={form.companyAddress}
+              onChange={set("companyAddress")}
+            />
+            <Textarea
+              label="About your company"
+              placeholder="What you supply, brands, capacity… (helps admins review your application)"
+              value={form.companyDescription}
+              onChange={(e) => setForm((f) => ({ ...f, companyDescription: e.target.value }))}
+            />
+            <p className="text-xs text-accent-700/80">
+              An administrator will review these details before activating your account.
+            </p>
           </div>
         )}
 

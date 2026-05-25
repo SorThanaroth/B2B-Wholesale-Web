@@ -1,4 +1,4 @@
-import { Mail, ShieldCheck } from "lucide-react";
+import { FileText, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
 import { useSupplierCompany } from "@/hooks/useSupplier";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Avatar } from "@/components/common/Avatar";
@@ -41,6 +41,35 @@ export function SupplierCompanyPage() {
                 <dd className="text-sm font-medium text-slate-700">{company.contactEmail ?? "—"}</dd>
               </div>
             </div>
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-50 text-accent-600">
+                <Phone className="h-5 w-5" />
+              </span>
+              <div>
+                <dt className="text-xs text-slate-400">Phone</dt>
+                <dd className="text-sm font-medium text-slate-700">{company.phone ?? "—"}</dd>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 sm:col-span-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-50 text-accent-600">
+                <MapPin className="h-5 w-5" />
+              </span>
+              <div>
+                <dt className="text-xs text-slate-400">Address</dt>
+                <dd className="text-sm font-medium text-slate-700">{company.address ?? "—"}</dd>
+              </div>
+            </div>
+            {company.description && (
+              <div className="flex items-start gap-3 sm:col-span-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                  <FileText className="h-5 w-5" />
+                </span>
+                <div>
+                  <dt className="text-xs text-slate-400">About</dt>
+                  <dd className="text-sm font-medium text-slate-700">{company.description}</dd>
+                </div>
+              </div>
+            )}
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
                 <ShieldCheck className="h-5 w-5" />

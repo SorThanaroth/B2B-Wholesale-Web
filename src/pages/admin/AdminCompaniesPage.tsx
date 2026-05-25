@@ -16,12 +16,22 @@ import {
   LoadingState,
   Modal,
   Pagination,
+  Textarea,
   type Column,
 } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 import type { Company, CompanyRequest } from "@/types/api";
 
-const EMPTY: CompanyRequest = { name: "", logoUrl: "", bankAccount: "", contactEmail: "" };
+const EMPTY: CompanyRequest = {
+  name: "",
+  logoUrl: "",
+  bankAccount: "",
+  contactEmail: "",
+  registrationNo: "",
+  phone: "",
+  address: "",
+  description: "",
+};
 
 export function AdminCompaniesPage() {
   const [page, setPage] = useState(0);
@@ -42,8 +52,17 @@ export function AdminCompaniesPage() {
 
   const openEdit = (c: Company) => {
     setEditing(c);
-    // bankAccount isn't returned by the merchant-facing list DTO; admins re-enter it on edit.
-    setForm({ name: c.name, logoUrl: c.logoUrl ?? "", bankAccount: "", contactEmail: c.contactEmail ?? "" });
+    // bankAccount + registrationNo aren't on the merchant-facing list DTO; admins re-enter them.
+    setForm({
+      name: c.name,
+      logoUrl: c.logoUrl ?? "",
+      bankAccount: "",
+      contactEmail: c.contactEmail ?? "",
+      registrationNo: "",
+      phone: c.phone ?? "",
+      address: c.address ?? "",
+      description: c.description ?? "",
+    });
     setModalOpen(true);
   };
 
@@ -169,6 +188,32 @@ export function AdminCompaniesPage() {
             type="email"
             value={form.contactEmail}
             onChange={(e) => setForm((f) => ({ ...f, contactEmail: e.target.value }))}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Business reg. no."
+              placeholder="e.g. KH-123456"
+              hint={editing ? "Re-enter to keep on file." : undefined}
+              value={form.registrationNo}
+              onChange={(e) => setForm((f) => ({ ...f, registrationNo: e.target.value }))}
+            />
+            <Input
+              label="Company phone"
+              placeholder="+855 …"
+              value={form.phone}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            />
+          </div>
+          <Input
+            label="Address"
+            placeholder="Street, city, province"
+            value={form.address}
+            onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+          />
+          <Textarea
+            label="Description"
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
           <Input
             label="Logo URL"
